@@ -1,0 +1,85 @@
+Q6. Write a CTE to calculate the total revenue for each product 
+ (Revenues = Price × Quantity), and return only products where  revenue > 3000.
+
+- WITH RevenueCTE AS (
+    SELECT 
+        p.ProductID,
+        p.ProductName,
+        SUM(p.Price * s.Quantity) AS Revenue
+    FROM Products p
+    JOIN Sales s ON p.ProductID = s.ProductID
+    GROUP BY p.ProductID, p.ProductName
+)
+SELECT *
+FROM RevenueCTE
+WHERE Revenue > 3000;
+
+Q7. Create a view named that shows:
+ Category, TotalProducts, AveragePrice.
+-CREATE VIEW vw_CategorySummary AS
+SELECT 
+    Category,
+    COUNT(*) AS TotalProducts,
+    AVG(Price) AS AveragePrice
+FROM Products
+GROUP BY Category;
+
+Q8. Create an updatable view containing ProductID, ProductName, and Price.
+ Then update the price of ProductID = 1 using the view.
+
+- CREATE VIEW vw_ProductBasic AS
+SELECT ProductID, ProductName, Price
+FROM Products;
+
+UPDATE USING VIEW:-
+
+- UPDATE vw_ProductBasic
+SET Price = 1500
+WHERE ProductID = 1;
+
+Q9. Create a stored procedure that accepts a category name and returns all products belonging to that
+category.
+
+- CREATE PROCEDURE GetProductsByCategory
+    @CategoryName VARCHAR(50)
+AS
+BEGIN
+    SELECT *
+    FROM Products
+    WHERE Category = @CategoryName;
+END;
+
+- EXECUTE:-
+  EXEC GetProductsByCategory 'Electronics';
+
+Q10. Create an AFTER DELETE trigger on the Products table that archives deleted product rows into a new
+table ProductArchive . The archive should store ProductID, ProductName, Category, Price, and DeletedAt
+timestamp.
+
+- Step 1: Create Archive Table
+
+CREATE TABLE ProductArchive (
+    ProductID INT,
+    ProductName VARCHAR(100),
+    Category VARCHAR(50),
+    Price DECIMAL(10,2),
+    DeletedAt DATETIME
+);
+
+- Step 2: Create Trigger
+
+CREATE TRIGGER trg_AfterDeleteProduct
+ON Products
+AFTER DELETE
+AS
+BEGIN
+    INSERT INTO ProductArchive (ProductID, ProductName, Category, Price, DeletedAt)
+    SELECT 
+        d.ProductID,
+        d.ProductName,
+        d.Category,
+        d.Price,
+        GETDATE()
+    FROM deleted d;
+END;
+ 
